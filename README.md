@@ -56,7 +56,7 @@ searchTissue(protocol, species, keyword) : search for tissues that contain keywo
 searchSystem(protocol, species, keyword) : search for systems that contain keyword and the corresponding cell types
 setParams(assay,species,cell_type,perbase) : set params list
 
-runAnnotate(file_path) : Upload file to server
+runAnnotate(input) : Upload file to server
 getProgress(task_id)
 getAnnoResult(result_type,task_id = -1,cell_type = -1)
 getInputFile(save_path, task_id) : get your input file from server
@@ -142,10 +142,10 @@ task_id=oaa.exampleTaskID()
 Submit your file to server and return a `task_id` for query progress and download results.
 
 ```python
-task_id=oaa.runAnnotate(file)
+task_id=oaa.runAnnotate(input)
 ```
 
-- `file`: The path of the '.bed' or '.bed.gz' file or a `list/pandas.DataFrame` format variable to be uploaded, such as `'/Users/example/example.bed'`.
+- `input`: The path of the '.bed' or '.bed.gz' file or a `list/pandas.DataFrame` format variable to be uploaded, such as `'/Users/example/example.bed'`.
 
 **Get Result**
 
@@ -253,7 +253,7 @@ oaa.searchSystem(protocol=1, species=11, keyword='Stem')
 
 oaa.setParams(species=11, protocol=1, cell_type=1, perbase=1)
 
-task_id=oaa.runAnnotate(file='./EXAMPLE.bed.gz')
+task_id=oaa.runAnnotate(input='./EXAMPLE.bed.gz')
 
 # view parameters
 oaa.viewParams(task_id=2021061817196919)
@@ -267,11 +267,11 @@ with open("./EXAMPLE.bed", "r") as file:
   lines = file.readlines()
 for line in lines:
   regions.append(line.split('\t'))
-task_id=oaa.runAnnotate(file=regions)
+task_id=oaa.runAnnotate(input=regions)
 
 
 pd_regions = pd.Dataframe(regions)
-task_id=oaa.runAnnotate(file=pd_regions)
+task_id=oaa.runAnnotate(input=pd_regions)
 ```
 
 
@@ -307,7 +307,3 @@ get the result to ./head.txt.gz
 # download the result
 anndata = oaa.fromOpen2EpiScanpy('./results/readopen_2021061817196919.txt', './results/head_2021061817196919.txt')
 ```
-
-
-
-
