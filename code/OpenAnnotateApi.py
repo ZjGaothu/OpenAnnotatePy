@@ -660,7 +660,12 @@ class Annotate(object):
                 os.system(command)
                 os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
                 os.remove("%s/%s_%s_temp.txt"%(save_path,result_type,task_id))
-                return 0
+                with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
+                    lines = file.readlines()
+                datas = []
+                for line in lines:
+                    datas.append(line[:-1].split('\t'))
+                return datas
             else:
                 url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:],'head')
                 r = requests.get(url,stream=True)
@@ -714,7 +719,12 @@ class Annotate(object):
                 os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
                 os.remove("%s/%s_%s_temp.txt"%(save_path,'head',task_id))
                 os.remove("%s/%s_%s.txt"%(save_path,'head',task_id))
-                return 0
+                with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
+                    lines = file.readlines()
+                datas = []
+                for line in lines:
+                    datas.append(line[:-1].split('\t'))
+                return datas
         else:
             print('Error! Please use Linux or MacOS')
             if result_type == 'head':
@@ -861,6 +871,6 @@ class Annotate(object):
             return 0
         anndata.obs['biosample'] = np.array(headers)[:,5]
         return anndata
-         
-            
+        
+        
        
