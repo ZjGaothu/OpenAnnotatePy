@@ -8,7 +8,6 @@ import numpy as np
 import anndata as ad
 import platform
 import scanpy as sc
-#http://166.111.5.185:80/openness/anno
 protocolDict = {1:'dseq',2:'aseq',3:'atbd'}
 speciesDict = {11:'hg19',12:'hg38',21:'mm09',22:'mm10'}
 speciesDict = {1:'hg19',2:'hg38',3:'mm09',4:'mm10'}
@@ -18,10 +17,7 @@ protocolDict_w = {1:'DNase-seq(ENCODE)',2:'ATAC-seq(ENCODE)',3:'ATAC-seq(ATACdb)
 speciesDict_w = {1:'GRCh37/hg19',2:'GRCh38/hg38',3:'GRCm37/mm9',4:'GRCm38/mm10'}
 IP_addr = '166.111.5.185'
 port = '80'
-# IP_addr = '159.226.47.242'
-# port = '65533'
 
-url = 'http://159.226.47.242:65533/openannotate/info/stat/celltp_hg19_dseq.txt'
 class Annotate(object):
     def __init__(self):
         super().__init__()
@@ -872,5 +868,3 @@ class Annotate(object):
         anndata.obs['biosample'] = np.array(headers)[:,5]
         return anndata
         
-        
-       
