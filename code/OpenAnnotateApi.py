@@ -1,3 +1,4 @@
+from itertools import count
 import requests
 import time
 import datetime
@@ -15,8 +16,7 @@ resultDict = {1:'head',2:'readopen',3:'peakopen',4:'spotopen',5:'foreread'}
 perbaseDict = {2: 'perbase based', 1:'region based'}
 protocolDict_w = {1:'DNase-seq(ENCODE)',2:'ATAC-seq(ENCODE)',3:'ATAC-seq(ATACdb)'}
 speciesDict_w = {1:'GRCh37/hg19',2:'GRCh38/hg38',3:'GRCm37/mm9',4:'GRCm38/mm10'}
-IP_addr = '166.111.5.185'
-port = '80'
+
 
 class Annotate(object):
     def __init__(self):
@@ -27,9 +27,13 @@ class Annotate(object):
         self.perbase = -1
         self.data_path = -1
         self.task_id = -1
+        self.IP_addr = '166.111.5.185'
+        self.port = '80'    
         print('Use object.help() to get basic functions and arguments')
     
     def help(self):
+        print('testWebserver() : test whether the web server is working normally')
+        print('setAddress(IP, port) : set the address of the web server')
         print('getParams() : get params list')
         print('getCelltypeList(protocol, species) : get cell type list')
         print('getTissueList(protocol,species) : get tissue list')
@@ -41,8 +45,8 @@ class Annotate(object):
         print('searchSystem(protocol, species, keyword) : search for systems that contain keyword and the corresponding cell types')
         print('setParams(assay, species, cell_type, perbase) : set params list')
         print('runAnnotate(input) : upload file to server')
-        print('getProgress(task_id)')
-        print('getAnnoResult(result_type,task_id = -1,cell_type = -1)')
+        print('getProgress(task_id) : query the annotation progress')
+        print('getAnnoResult(result_type,task_id,cell_type) : download annotation result to local path')
         print('getInputFile(save_path, task_id) : get your input file from server')
         print('viewParams(task_id) : view parameters')
         print('fromOpen2EpiScanpy(data, head) : generate anndata from annotation result')
@@ -56,13 +60,21 @@ class Annotate(object):
         print('Annotate mode : ')
         print('1 - Region based')
         print('2 - Per-base based')
-    
+
+    def SetAddress(self,IP,port):
+        self.IP_addr = IP
+        self.port = port
+
     def setParams(self,species,protocol,cell_type,perbase):
         if protocol not in [1,2,3]:
             print('Wrong parameter! Please reset protocol')
+            print('Protocol list : ')
+            self.getProtocolList()
             return
         if species not in [1,2,3,4]:
             print('Wrong parameter! Please reset species')
+            print('Species list : ')
+            self.getSpeciesList()
             return
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
@@ -71,12 +83,12 @@ class Annotate(object):
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
         self.protocol = protocol
-        self.species = (species//2)*10 + (species%2)
+        self.species = (species//2 +1)*10 + (species%2)
         if species == 2:
             species = 1
         if species == 4:
             species = 2
-        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[self.protocol])
+        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[self.protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
@@ -84,16 +96,33 @@ class Annotate(object):
             for cell in cell_type:
                 if cell not in list(range(1,len(result) + 1)):
                     print('Wrong parameter! Please reset cell type') 
+                    print('Please set cell types in range 1 - %s'%(len(result)))
                 return
         else:    
             if cell_type not in list(range(1,len(result) + 1)):
                 print('Wrong parameter! Please reset cell type') 
+                print('Please set cell types in range 1 - %s'%(len(result)))
                 return
         if perbase not in [2,1]:
-            print('Wrong parameter! Please reset perbase')
+            print('Wrong parameter! Please reset perbase in {1, 2}')
+            print('Annotate mode : ')
+            print('1 - Region based')
+            print('2 - Per-base based')
             return 
         self.celltype = cell_type
         self.perbase = perbase - 1
+        print('Species: ', speciesDict_w[species])
+        print('Protocol: ', protocolDict_w[self.protocol])
+        print('Cell type: ')
+        if cell_type == 1:
+            print('All biosamples')
+        else:
+            if isinstance(cell_type,list):
+                for cell in cell_type:
+                    print(result[cell][8:])
+            else:
+                print(result[cell_type][8:])
+        print('Annotate mode: ', perbaseDict[self.perbase+1])
     
     def checkParams(self):
         if self.protocol == -1 or self.species == -1 or self.celltype == -1 or self.perbase == -1:
@@ -129,7 +158,7 @@ class Annotate(object):
         if os.path.exists(save_path):
             print('get the result to %s/%s.bed'%(save_path,task_id))
             task_id = str(task_id)
-            url = 'http://%s:%s/openness/anno/task/task/%s/%s.bed'%(IP_addr,port, task_id,task_id[8:])
+            url = 'http://%s:%s/openness/anno/task/task/%s/%s.bed'%(self.IP_addr,self.port, task_id,task_id[8:])
             r = requests.get(url,stream=True)
             f = open("%s/%s.bed"%(save_path,task_id), "wb")
             for chunk in r.iter_content(chunk_size=512):
@@ -174,17 +203,18 @@ class Annotate(object):
                 "taskname" : task_id
                 }
             file = {"file" :open(file_path,"rb")}
-            url = 'http://%s:%s/openness/anno/phpa/stepu_api.php'%(IP_addr,port)
+            url = 'http://%s:%s/openness/anno/phpa/stepu_api.php'%(self.IP_addr,self.port)
             r = requests.post(url,files= file,data=files)
-            self.task_id = task_id
-            url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:])
-            result = requests.get(url,stream=True)
             print('Uploading...')
+            self.task_id = task_id
+            url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:])
+            result = requests.get(url,stream=True)
+            print('Initializing...')
             while result.status_code != 200:
                 time.sleep(1)
                 result = requests.get(url,stream=True)
             print('Your task id is: ' + str(task_id))
-            print('You can get the progress of your task through getProgress(task_id=%s)'%(task_id))
+            print('You can get the progress of your task through object.getProgress(task_id=%s)'%(task_id))
             return task_id
         elif isinstance(file_path ,list) or isinstance(file_path,pd.DataFrame):
             if isinstance(file_path,pd.DataFrame):
@@ -196,7 +226,8 @@ class Annotate(object):
                 f.write('\t'.join(file_path[i])+'\n')
             f.close()
             file_path = './tmp/annotatefile.bed'
-            return(self.runAnnotate(file_path))
+            task_id = self.runAnnotate(file_path)
+            return(task_id)
 
     def getCelltypeList(self,protocol,species):
         if protocol not in [1,2,3]:
@@ -218,7 +249,7 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
@@ -246,12 +277,12 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/stat/tissue_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/stat/tissue_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
         for i in range(len(result) - 1):
-            print(result[i][8:])
+            print(i+1 , '-' ,result[i][8:])
 
     def getSystemList(self,protocol,species):
         if species == 2:
@@ -261,13 +292,20 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/stat/system_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/stat/system_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
         for i in range(len(result) - 1):
-            print(result[i][8:])
+            print(i+1, '-', result[i][8:])
     
+    def testWebserver(self):
+        url = 'http://%s:%s/openness/anno/phpa/help/EXAMPLE.bed.gz'%(self.IP_addr,self.port)
+        r = requests.get(url,stream=True)
+        if r.status_code == 200:
+            print('The web server is working properly!')
+        else:
+            print('The web server is not working')
 
     def searchTissue(self,protocol,species,keyword):
         if protocol not in [1,2,3]:
@@ -289,7 +327,7 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/meta/headFiles/%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/meta/headFiles/%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
@@ -303,14 +341,20 @@ class Annotate(object):
         for tissue in np.unique(results['Tissue'].values).tolist():
             if keyword.lower() in tissue.lower():
                 match_tissues.append(tissue)
+        counts = []
         for match_tissue in match_tissues:
             print('Tissue:  ' + match_tissue)
             idx = np.where(results['Tissue'].values == match_tissue)[0]
             print('Cell types: ')
+            print('Index    -    Cell type')
             count = 0
             for cell_type in np.unique(results['Celltype'].values[idx]).tolist():
                 count += 1
-                print(count ,'-' ,cell_type)
+                idx_cell = self.searchCelltypeIndex(species,protocol,cell_type)
+                print(idx_cell ,'   -   ' ,cell_type)
+            counts.append(count)
+        if np.sum(counts) == 0:
+            print('Your keyword can not be found.')
 
     def searchSystem(self,protocol,species,keyword):
         if protocol not in [1,2,3]:
@@ -332,7 +376,7 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/meta/headFiles/%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/meta/headFiles/%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
@@ -346,14 +390,38 @@ class Annotate(object):
         for system in np.unique(results['System'].values).tolist():
             if keyword.lower() in system.lower():
                 match_systems.append(system)
+        counts = []
         for match_system in match_systems:
             print('System:  ' + match_system)
             idx = np.where(results['System'].values == match_system)[0]
             print('Cell types: ')
+            print('Index    -    Cell type')
             count = 0
             for cell_type in np.unique(results['Celltype'].values[idx]).tolist():
                 count += 1
-                print(count ,'-' ,cell_type)
+                idx_cell = self.searchCelltypeIndex(species,protocol,cell_type)
+                print(idx_cell ,'   -   ' ,cell_type)
+            counts.append(count)
+        if np.sum(counts) == 0:
+            print('Your keyword can not be found.')
+
+    def searchCelltypeIndex(self,protocol,species,keyword):
+        if species == 2:
+            species = 1
+        if species == 4:
+            species = 3
+        if species == 3 and protocol == 3:
+            print('The corresponding cell type was not found. Please reselect the parameters.')
+            return
+        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
+        result = requests.get(url,stream=True)
+        result = result.text
+        result = result.split('\n')
+        if keyword in '1 - All biosample types':
+            return 1
+        for i in range(len(result) - 1):
+            if keyword.lower() in (result[i][8:]).lower():
+                return(i+2)
 
     def searchCelltype(self,protocol,species,keyword):
         if protocol not in [1,2,3]:
@@ -375,11 +443,13 @@ class Annotate(object):
         if species == 3 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
         count = 0
+        print('Cell types:')
+        print('Index - Cell type')
         if keyword in '1 - All biosample types':
             print('1 - All biosample types')
             count += 1
@@ -419,7 +489,7 @@ class Annotate(object):
     
     def viewParams(self,task_id):
         print('Your task\'s parameters:')
-        url = 'http://%s:%s/openness/anno/task/task/%s/openanno.ret'%(IP_addr,port,task_id)
+        url = 'http://%s:%s/openness/anno/task/task/%s/openanno.ret'%(self.IP_addr,self.port,task_id)
         r = requests.get(url,stream=True)
         task_info = r.text.split('\t')[-4:]
         task_info[3] = task_info[3].split('\n')[0]
@@ -436,7 +506,7 @@ class Annotate(object):
         if species == 21 and protocol == 3:
             print('The corresponding cell type was not found. Please reselect the parameters.')
             return
-        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[int(species)],protocolDict[int(protocol)])
+        url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[int(species)],protocolDict[int(protocol)])
         result = requests.get(url,stream=True)
         result = result.text
         result = result.split('\n')
@@ -444,7 +514,7 @@ class Annotate(object):
             print('Cell type: '+ 'All biosample types')
         else:
             print('Cell type: ' + result[int(cell_type) - 2][8:])
-        print('Annotate Mode: '+ perbaseDict[int(perbase)] )
+        print('Annotate Mode: '+ perbaseDict[int(perbase)+1])
 
     
     
@@ -455,156 +525,38 @@ class Annotate(object):
 
     def getExampleInputFile(self,save_path):
         print('Get the result to %s/EXAMPLE.bed.gz'%(save_path))
-        url = 'http://%s:%s/openness/anno/phpa/help/EXAMPLE.bed.gz'%(IP_addr,port)
+        url = 'http://%s:%s/openness/anno/phpa/help/EXAMPLE.bed.gz'%(self.IP_addr,self.port)
         r = requests.get(url,stream=True)
         f = open("%s/EXAMPLE.bed.gz"%(save_path), "wb")
         for chunk in r.iter_content(chunk_size=512):
             if chunk:
                 f.write(chunk)
-        
+    # 需要修改
     def getProgress(self,task_id = -1):
         if task_id == -1:
             task_id = self.task_id
         task_id = str(task_id)
-        url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:])
+        url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.ret'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:])
         result = requests.get(url,stream=True)
-        if result.status_code == 200:
-            url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:])
+        if result.status_code == 404:
+            url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:])
             result = requests.get(url,stream=True)
             result = result.text
             print(result)
         else:
             print('Your task has been completed!')
             print('You can get the result file type first through object.getResultType()')
-            print('You can download result file through object.getAnnoResult(result_type, %s)'%(task_id))
+            print('You can download result file through data = object.getAnnoResult(result_type, %s)'%(task_id))
 
 
-# 修改二
-    def getAnnoResult(self,result_type,task_id = -1,cell_type = -1):
-        save_path = './results'
-        if not os.path.exists('./results'):
-            os.mkdir('results')
-        if task_id == -1:
-            task_id = self.task_id
-        if cell_type == -1:
-            cell_type = self.celltype
-        task_id = str(task_id)
-        result_type = resultDict[result_type]
-        url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:],result_type)
-        r = requests.get(url,stream=True)
-        f = open("%s/%s_%s.txt.gz"%(save_path,result_type,task_id), "wb")
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
-        f.close()
-        print('Get the result to %s/%s_%s.txt'%(save_path,result_type,task_id))
-        if result_type == 'head':
-            with gzip.open("%s/%s_%s.txt.gz"%(save_path,result_type,task_id), "rt") as file:
-                lines = file.readlines()
-            heads = []
-            for line in lines:
-                heads.append(line.split('\t')[5])
-            datas = []
-            for line in lines:
-                datas.append(line.split('\t'))
-            species = self.species
-            protocol = self.protocol
-            if species == 12:
-                species = 11
-            if species == 22:
-                species = 21
-            if species == 21 and protocol == 3:
-                print('The corresponding cell type was not found. Please reselect the parameters.')
-                return
-            url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
-            result = requests.get(url,stream=True)
-            result = result.text
-            result = result.split('\n')
-            cells = []
-            for i in range(len(result) - 1):
-                cells.append(result[i][8:])
-            cells = np.array(cells)
-            # filter if not all bio sample selected
-            if isinstance(cell_type,list):
-                cells = cells[[int(tmp) - 1 for tmp in cell_type]]
-            idxs = []
-            heads = np.array(heads)
-            for j in range(len(cells)):
-                idxs.extend(np.where(heads == cells[j])[0].tolist())
-            datas = np.array(datas)
-            datas = datas[idxs]
-            datas = datas.tolist()
-            f = open("%s/%s_%s.txt"%(save_path,result_type,task_id), 'w')
-            os.remove("%s/%s_%s.txt.gz"%(save_path,result_type,task_id))
-            for i in range(len(datas)):
-                f.write('\t'.join(datas[i]))
-            f.close()
-            return datas
-        else:
-            r = requests.get(url,stream=True)
-            f = open("%s/%s_%s.txt.gz"%(save_path,'head',task_id), "wb")
-            for chunk in r.iter_content(chunk_size=512):
-                if chunk:
-                    f.write(chunk)
-            f.close()
-            with gzip.open("%s/%s_%s.txt.gz"%(save_path,'head',task_id), "rt") as file:
-                lines = file.readlines()
-            heads = []
-            for line in lines:
-                heads.append(line.split('\t')[5])
-            with gzip.open("%s/%s_%s.txt.gz"%(save_path,result_type,task_id), "rt") as file:
-                lines = file.readlines()
-            datas = []
-            print('Waiting ......')
-            for line in lines:
-                datas.append(line.split('\t'))
-            
-            # get cell types
-            species = self.species
-            protocol = self.protocol
-            if species == 12:
-                species = 11
-            if species == 22:
-                species = 21
-            if species == 21 and protocol == 3:
-                print('The corresponding cell type was not found. Please reselect the parameters.')
-                return
-            url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
-            result = requests.get(url,stream=True)
-            result = result.text
-            result = result.split('\n')
-            cells = []
-            for i in range(len(result) - 1):
-                cells.append(result[i][8:])
-            cells = np.array(cells)
-            # filter if not all bio sample selected
-            if isinstance(cell_type,list):
-                cells = cells[[int(tmp) - 1 for tmp in cell_type]]
-            idxs = [0,1,2,3]
-            heads = np.array(heads)
-            for j in range(len(cells)):
-                idxs.extend((np.where(heads == cells[j])[0]+4).tolist())
-            datas = np.array(datas)
-            datas = datas[:,idxs]
-            datas = datas.tolist()
-            f = open("%s/%s_%s.txt"%(save_path,result_type,task_id), 'w')
-            os.remove("%s/%s_%s.txt.gz"%(save_path,result_type,task_id))
-            for i in range(len(datas)):
-                f.write('\t'.join(datas[i])+'\n')
-            f.close()
-            return datas
     
-    def getAnnoResult(self,result_type,task_id = -1,cell_type = -1):
+    def getAnnoResult(self,result_type,task_id,cell_type):
         save_path = './results'
         if not os.path.exists('./results'):
             os.mkdir('results')
-        if task_id == -1:
-            task_id = self.task_id
-        if cell_type == -1:
-            cell_type = self.celltype
         task_id = str(task_id)
         result_type = resultDict[result_type]
-        url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:],result_type)
+        url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:],result_type)
         r = requests.get(url,stream=True)
         f = open("%s/%s_%s_origin.txt.gz"%(save_path,result_type,task_id), "wb")
         for chunk in r.iter_content(chunk_size=1024):
@@ -614,113 +566,116 @@ class Annotate(object):
         print('Get the result to %s/%s_%s.txt'%(save_path,result_type,task_id))
         if platform.system() == 'Linux' or platform.system() == 'Darwin':
             os.system('gunzip %s/%s_%s_origin.txt.gz'%(save_path,result_type,task_id))
-            if result_type == 'head':
-                command = 'cut -f 6 %s/%s_%s_origin.txt'%(save_path,result_type,task_id)
-                command += ' > %s/%s_%s_temp.txt'%(save_path,result_type,task_id)
-                os.system(command)
-                with open("%s/%s_%s_temp.txt"%(save_path,result_type,task_id), "r") as file:
-                    lines = file.readlines()
-                heads = []
-                for line in lines:
-                    heads.append(line.split('\n')[0])
-                species = self.species
-                protocol = self.protocol
-                if species == 2:
-                    species = 1
-                if species == 4:
-                    species = 3
-                if species == 3 and protocol == 3:
-                    print('The corresponding cell type was not found. Please reselect the parameters.')
-                    return
-                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
-                result = requests.get(url,stream=True)
-                result = result.text
-                result = result.split('\n')
-                cells = []
-                for i in range(len(result) - 1):
-                    cells.append(result[i][8:])
-                cells = np.array(cells)
-                # filter if not all bio sample selected
-                if isinstance(cell_type,list):
-                    cells = cells[[int(tmp) - 1 for tmp in cell_type]]
-                idxs = []
-                heads = np.array(heads)
-                for j in range(len(cells)):
-                    idxs.extend(np.where(heads == cells[j])[0].tolist())
-                command = 'sed -n \"'
-                for idx in idxs:
-                    command = command  + str(idx+1) + 'p;' 
-                command = command[:-1]
-                command += "\" %s/%s_%s_origin.txt"%(save_path,result_type,task_id)
-                command += ' > %s/%s_%s.txt'%(save_path,result_type,task_id)
-                os.system(command)
-                os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
-                os.remove("%s/%s_%s_temp.txt"%(save_path,result_type,task_id))
-                with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
-                    lines = file.readlines()
-                datas = []
-                for line in lines:
-                    datas.append(line[:-1].split('\t'))
-                return datas
+            if cell_type != 1:
+                if result_type == 'head':
+                    command = 'cut -f 6 %s/%s_%s_origin.txt'%(save_path,result_type,task_id)
+                    command += ' > %s/%s_%s_temp.txt'%(save_path,result_type,task_id)
+                    os.system(command)
+                    with open("%s/%s_%s_temp.txt"%(save_path,result_type,task_id), "r") as file:
+                        lines = file.readlines()
+                    heads = []
+                    for line in lines:
+                        heads.append(line.split('\n')[0])
+                    species = (self.species // 10 -1)*2  + self.species % 10
+                    protocol = self.protocol
+                    if species == 2:
+                        species = 1
+                    if species == 4:
+                        species = 3
+                    if species == 3 and protocol == 3:
+                        print('The corresponding cell type was not found. Please reselect the parameters.')
+                        return
+                    url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
+                    result = requests.get(url,stream=True)
+                    result = result.text
+                    result = result.split('\n')
+                    cells = []
+                    for i in range(len(result) - 1):
+                        cells.append(result[i][8:])
+                    cells = np.array(cells)
+                    # filter if not all bio sample selected
+                    if isinstance(cell_type,list):
+                        cells = cells[[int(tmp) - 1 for tmp in cell_type]]
+                    idxs = []
+                    heads = np.array(heads)
+                    for j in range(len(cells)):
+                        idxs.extend(np.where(heads == cells[j])[0].tolist())
+                    command = 'sed -n \"'
+                    for idx in idxs:
+                        command = command  + str(idx+1) + 'p;' 
+                    command = command[:-1]
+                    command += "\" %s/%s_%s_origin.txt"%(save_path,result_type,task_id)
+                    command += ' > %s/%s_%s.txt'%(save_path,result_type,task_id)
+                    os.system(command)
+                    os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
+                    os.remove("%s/%s_%s_temp.txt"%(save_path,result_type,task_id))
+                    with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
+                        lines = file.readlines()
+                    datas = []
+                    for line in lines:
+                        datas.append(line[:-1].split('\t'))
+                    return datas
+                else:
+                    url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:],'head')
+                    r = requests.get(url,stream=True)
+                    f = open("%s/%s_%s.txt.gz"%(save_path,'head',task_id), "wb")
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk:
+                            f.write(chunk)
+                    f.close()
+                    os.system('gunzip %s/%s_%s.txt.gz'%(save_path,'head',task_id))
+                    command = 'cut -f 6 %s/%s_%s.txt'%(save_path,'head',task_id)
+                    command += ' > %s/%s_%s_temp.txt'%(save_path,'head',task_id)
+                    os.system(command)
+                    with open("%s/%s_%s_temp.txt"%(save_path,'head',task_id), "r") as file:
+                        lines = file.readlines()
+                    heads = []
+                    for line in lines:
+                        heads.append(line.split('\n')[0])
+                    print('Waiting ......')
+                    # get cell types
+                    species = (self.species // 10 -1)*2  + self.species % 10
+                    protocol = self.protocol
+                    if species == 2:
+                        species = 1
+                    if species == 4:
+                        species = 3
+                    if species == 3 and protocol == 3:
+                        print('The corresponding cell type was not found. Please reselect the parameters.')
+                        return
+                    url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
+                    result = requests.get(url,stream=True)
+                    result = result.text
+                    result = result.split('\n')
+                    cells = []
+                    for i in range(len(result) - 1):
+                        cells.append(result[i][8:])
+                    cells = np.array(cells)
+                    # filter if not all bio sample selected
+                    if isinstance(cell_type,list):
+                        cells = cells[[int(tmp) - 1 for tmp in cell_type]]
+                    idxs = [1,2,3,4]
+                    heads = np.array(heads)
+                    for j in range(len(cells)):
+                        idxs.extend((np.where(heads == cells[j])[0]+5).tolist())
+                    command = 'cut -f '
+                    for idx in idxs:
+                        command = command  + str(idx) + ',' 
+                    command = command[:-1]
+                    command += " %s/%s_%s_origin.txt"%(save_path,result_type,task_id)
+                    command += ' > %s/%s_%s.txt'%(save_path,result_type,task_id)
+                    os.system(command)
+                    os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
+                    os.remove("%s/%s_%s_temp.txt"%(save_path,'head',task_id))
+                    os.remove("%s/%s_%s.txt"%(save_path,'head',task_id))
+                    with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
+                        lines = file.readlines()
+                    datas = []
+                    for line in lines:
+                        datas.append(line[:-1].split('\t'))
+                    return datas
             else:
-                url = 'http://%s:%s/openness/anno/task/%s/%s/%s/anno/%s.txt.gz'%(IP_addr,port,task_id[:4],task_id[4:8],task_id[8:],'head')
-                r = requests.get(url,stream=True)
-                f = open("%s/%s_%s.txt.gz"%(save_path,'head',task_id), "wb")
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-                f.close()
-                os.system('gunzip %s/%s_%s.txt.gz'%(save_path,'head',task_id))
-                command = 'cut -f 6 %s/%s_%s.txt'%(save_path,'head',task_id)
-                command += ' > %s/%s_%s_temp.txt'%(save_path,'head',task_id)
-                os.system(command)
-                with open("%s/%s_%s_temp.txt"%(save_path,'head',task_id), "r") as file:
-                    lines = file.readlines()
-                heads = []
-                for line in lines:
-                    heads.append(line.split('\n')[0])
-                print('Waiting ......')
-                # get cell types
-                species = self.species
-                protocol = self.protocol
-                if species == 2:
-                    species = 1
-                if species == 4:
-                    species = 3
-                if species == 3 and protocol == 3:
-                    print('The corresponding cell type was not found. Please reselect the parameters.')
-                    return
-                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
-                result = requests.get(url,stream=True)
-                result = result.text
-                result = result.split('\n')
-                cells = []
-                for i in range(len(result) - 1):
-                    cells.append(result[i][8:])
-                cells = np.array(cells)
-                # filter if not all bio sample selected
-                if isinstance(cell_type,list):
-                    cells = cells[[int(tmp) - 1 for tmp in cell_type]]
-                idxs = [1,2,3,4]
-                heads = np.array(heads)
-                for j in range(len(cells)):
-                    idxs.extend((np.where(heads == cells[j])[0]+5).tolist())
-                command = 'cut -f '
-                for idx in idxs:
-                    command = command  + str(idx) + ',' 
-                command = command[:-1]
-                command += " %s/%s_%s_origin.txt"%(save_path,result_type,task_id)
-                command += ' > %s/%s_%s.txt'%(save_path,result_type,task_id)
-                os.system(command)
-                os.remove("%s/%s_%s_origin.txt"%(save_path,result_type,task_id))
-                os.remove("%s/%s_%s_temp.txt"%(save_path,'head',task_id))
-                os.remove("%s/%s_%s.txt"%(save_path,'head',task_id))
-                with open("%s/%s_%s.txt"%(save_path,result_type,task_id), "r") as file:
-                    lines = file.readlines()
-                datas = []
-                for line in lines:
-                    datas.append(line[:-1].split('\t'))
-                return datas
+                os.rename("%s/%s_%s_origin.txt"%(save_path,result_type,task_id),"%s/%s_%s.txt"%(save_path,result_type,task_id))
         else:
             print('Error! Please use Linux or MacOS')
             if result_type == 'head':
@@ -732,7 +687,7 @@ class Annotate(object):
                 datas = []
                 for line in lines:
                     datas.append(line.split('\t'))
-                species = self.species
+                species = (self.species // 10 -1)*2  + self.species % 10
                 protocol = self.protocol
                 if species == 12:
                     species = 11
@@ -741,7 +696,7 @@ class Annotate(object):
                 if species == 21 and protocol == 3:
                     print('The corresponding cell type was not found. Please reselect the parameters.')
                     return
-                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
                 result = requests.get(url,stream=True)
                 result = result.text
                 result = result.split('\n')
@@ -785,7 +740,7 @@ class Annotate(object):
                     datas.append(line.split('\t'))
                 
                 # get cell types
-                species = self.species
+                species = (self.species // 10 -1)*2  + self.species % 10
                 protocol = self.protocol
                 if species == 12:
                     species = 11
@@ -794,7 +749,7 @@ class Annotate(object):
                 if species == 21 and protocol == 3:
                     print('The corresponding cell type was not found. Please reselect the parameters.')
                     return
-                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(IP_addr,port,speciesDict[species],protocolDict[protocol])
+                url = 'http://%s:%s/openness/anno/info/stat/celltp_%s_%s.txt'%(self.IP_addr,self.port,speciesDict[species],protocolDict[protocol])
                 result = requests.get(url,stream=True)
                 result = result.text
                 result = result.split('\n')
@@ -867,4 +822,5 @@ class Annotate(object):
             return 0
         anndata.obs['biosample'] = np.array(headers)[:,5]
         return anndata
-        
+
+   
