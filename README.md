@@ -21,6 +21,50 @@ OpenAnnotate is available on pypi here and can be installed via
 pip install OpenAnnotatePy
 ```
 
+### Functions of an Annotate() object
+
+| Code | Function |
+| ------ | ------  |
+| testWebserver() | test whether the web server is working normally |
+| setAddress(IP, port) | set the address of the web server |
+| help() | get a list of the various functions and arguments that the package contains. |
+| getParams() | get params list |
+| getCelltypeList(protocol, species) | get cell type list |
+| getTissueList(protocol, species) | get cell type list |
+| getSystemList(protocol, species) | get cell type list |
+| searchCelltype(protocol, species, keyword) | search for cell types that contain keyword |
+| searchTissue(protocol, species, keyword) | search for cell types that contain keyword |
+| searchSystem(protocol, species, keyword) | search for cell types that contain keyword |
+| setParams(assay, species, cell_type, perbase)| set parameters |
+| runAnnotate(input) | upload file to server |
+| getProgress(task_id)| you can view the annotation progress |
+| getAnnoResult(result_type,task_id,cell_type) | download the annotation result |
+| getInputFile(save_path, task_id) | get your input file from server |
+| viewParams(task_id) | view parameters|
+| getExampleTaskID() | get example task id|
+| getExampleInputFile(save_path) | get example input file to the save_path|
+| fromOpen2EpiScanpy(data, head) | generate anndata from annotation result |
+
+### A simple example
+
+Upload a region file to the web server and download the head and the readopen of the annotation result to the local path, then initialize an anndata for downstream analysis.
+
+```python
+from OpenAnnotatePy import OpenAnnotateApi
+oaa=OpenAnnotateApi.Annotate()
+
+oaa.setParams(species=1, protocol=1, cell_type=1, perbase=1)
+
+task_id=oaa.runAnnotate(input='./EXAMPLE.bed.gz')
+
+anno_data = oaa.getAnnoResult(result_type = 2,task_id = task_id ,cell_type = 1)
+
+anno_head = oaa.getAnnoResult(result_type = 1,task_id = task_id ,cell_type = 1)
+
+ann_data = fromOpen2EpiScanpy(data = anno_data, head = anno_head)
+
+```
+
 
 ### Usage  
 
@@ -46,6 +90,8 @@ Get a list of the various functions and arguments that the package contains.
 ```Python
 oaa.help()
 '''
+testWebserver() : test whether the web server is working normally
+setAddress(IP, port) : set the address of the web server
 getParams() : get params list
 getCelltypeList(protocol,species) : get cell type list
 getTissueList(protocol,species) : get tissue list
@@ -57,8 +103,8 @@ searchSystem(protocol, species, keyword) : search for systems that contain keywo
 setParams(assay,species,cell_type,perbase) : set params list
 
 runAnnotate(input) : Upload file to server
-getProgress(task_id)
-getAnnoResult(result_type,task_id = -1,cell_type = -1)
+getProgress(task_id) : query the annotation progress
+getAnnoResult(result_type,task_id,cell_type) : download annotation result to local path
 getInputFile(save_path, task_id) : get your input file from server
 viewParams(task_id) : view parameters
 exampleTaskID() : get example task id
@@ -95,10 +141,10 @@ oaa.searchSystem(protocol, species, keyword)
 - `getParams()`: Return the parameter list of `species`,`protocol` and `Annotate method`.
 - `getCelltypeList(protocol,species)` : Return the cell type list of the corresponding `protocol` and `species`.
 - `species` : 
-  - 11 : GRCh37/hg19 
-  - 12 : GRCh38/hg38 
-  - 21 : GRCm37/mm9 
-  - 22 : GRCm38/mm10
+  - 1 : GRCh37/hg19 
+  - 2 : GRCh38/hg38 
+  - 3 : GRCm37/mm9 
+  - 4 : GRCm38/mm10
 - `protocol`: 
   - 1 : DNase-seq(ENCODE)
   - 2 : ATAC-seq(ENCODE) 
@@ -114,19 +160,31 @@ Set parameters for your object.
 oaa.setParams(species, protocol, cell_type, perbase)
 ```
 - `species` : 
-  - 11 : GRCh37/hg19 
-  - 12 : GRCh38/hg38 
-  - 21 : GRCm37/mm9 
-  - 22 : GRCm38/mm10
+  - 1 : GRCh37/hg19 
+  - 2 : GRCh38/hg38 
+  - 3 : GRCm37/mm9 
+  - 4 : GRCm38/mm10
 - `protocol`: 
   - 1 : DNase-seq(ENCODE)
   - 2 : ATAC-seq(ENCODE) 
   - 3 : ATAC-seq(ATACdb)
 - `cell_type`: refer to the function `getCelltypeList()`.
-- `perbase`: 0 : Region based,1 : Per-base based.
+- `perbase`: 1 : Region based,2 : Per-base based.
 
 
 **Example file**
+
+The format of the chromatin regions in the input file.
+
+```python
+chr1	10732070	10733118	.	.	.
+chr1	10781239	10781744	.	.	.
+chr1	10795106	10799241	.	.	.
+chr1	10851570	10852173	.	.	.
+chr1	10965129	10966144	.	.	.
+chr1	11906876	11908666	.	.	.
+```
+
 
 Example `task_id` and `EXAMPLE.bed` file.
 ```python
@@ -168,7 +226,7 @@ oaa.getResultType()
 '''
 
 # download the annotate result
-oaa.getAnnoResult(result_type, task_id = -1,cell_type = -1)
+oaa.getAnnoResult(result_type, task_id ,cell_type )
 
 # download the bed file from web server
 oaa.getInputFile(save_path, task_id)
@@ -195,7 +253,6 @@ fromOpen2EpiScanpy(self, data, head)
 
 
 
-**Anno data**
 
 ### Example
 
@@ -209,17 +266,17 @@ oaa.getParams()
 output:
 ```
 Species list :
-11 - GRCh37/hg19
-12 - GRCh38/hg38
-21 - GRCm37/mm9
-22 - GRCm38/mm10
+1 - GRCh37/hg19
+1 - GRCh38/hg38
+3 - GRCm37/mm9
+4 - GRCm38/mm10
 Protocol list :
 1 - DNase-seq(ENCODE)
 2 - ATAC-seq(ENCODE)
 3 - ATAC-seq(ATACdb)
 Annotate mode :
-0 - Region based
-1 - Per-base based
+1 - Region based
+2 - Per-base based
 ```
 ```python
 # get example bed and task id.
@@ -239,19 +296,19 @@ get the result to ./2021061544690865.bed
 Then search for the system, tissue and cell type. After setting parameters, you can submit your job to the server.
 
 ```python
-oaa.getCelltypeList(protocol=1, species=11)
+oaa.getCelltypeList(protocol=1, species=1)
 
-oaa.getTissueList(protocol=1, species=11)
+oaa.getTissueList(protocol=1, species=1)
 
-oaa.getSystemList(protocol=1, species=11)
+oaa.getSystemList(protocol=1, species=1)
 
-oaa.searchCelltype(protocol=1, species=11, keyword='K562')
+oaa.searchCelltype(protocol=1, species=1, keyword='K562')
 
-oaa.searchTissue(protocol=1, species=11, keyword='blood')
+oaa.searchTissue(protocol=1, species=1, keyword='blood')
 
-oaa.searchSystem(protocol=1, species=11, keyword='Stem')
+oaa.searchSystem(protocol=1, species=1, keyword='Stem')
 
-oaa.setParams(species=11, protocol=1, cell_type=1, perbase=1)
+oaa.setParams(species=1, protocol=1, cell_type=1, perbase=1)
 
 task_id=oaa.runAnnotate(input='./EXAMPLE.bed.gz')
 
@@ -292,7 +349,7 @@ Annotate mode: perbase based
 ```python
 # download the result
 oaa.getProgress(task_id=2021061817196919)
-head = oaa.getAnnoResult(result_type=1, task_id=2021061817196919)
+head = oaa.getAnnoResult(result_type=1, task_id=2021061817196919,cell_type=1)
 ```
 output：
 ```
@@ -307,3 +364,7 @@ get the result to ./head.txt.gz
 # download the result
 anndata = oaa.fromOpen2EpiScanpy('./results/readopen_2021061817196919.txt', './results/head_2021061817196919.txt')
 ```
+
+
+
+
