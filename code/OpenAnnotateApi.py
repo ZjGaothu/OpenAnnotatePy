@@ -27,8 +27,10 @@ class Annotate(object):
         self.perbase = -1
         self.data_path = -1
         self.task_id = -1
-        self.IP_addr = '166.111.5.185'
-        self.port = '80'    
+        self.IP_addr = '159.226.47.242'
+        self.port = '65533'   
+        self.IP_addr_candidate = '166.111.5.185'
+        self.port_candidate = '80'     
         print('Use object.help() to get basic functions and arguments')
     
     def help(self):
@@ -822,5 +824,13 @@ class Annotate(object):
             return 0
         anndata.obs['biosample'] = np.array(headers)[:,5]
         return anndata
+        
+        
+        
+        
+        
+            
+            
+            
 
-   
+
