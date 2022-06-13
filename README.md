@@ -107,8 +107,8 @@ getProgress(task_id) : query the annotation progress
 getAnnoResult(result_type,task_id,cell_type) : download annotation result to local path
 getInputFile(save_path, task_id) : get your input file from server
 viewParams(task_id) : view parameters
-exampleTaskID() : get example task id
-exampleInputFile(save_path) : get example input file to the save_path
+getExampleTaskID() : get example task id
+getExampleInputFile(save_path) : get example input file to the save_path
 fromOpen2EpiScanpy(data, head) : generate anndata from annotation result
 '''
 ```
@@ -188,9 +188,9 @@ chr1	11906876	11908666	.	.	.
 
 Example `task_id` and `EXAMPLE.bed` file.
 ```python
-oaa.exampleInputFile(save_path)
+oaa.getExampleInputFile(save_path)
 
-task_id=oaa.exampleTaskID()
+task_id=oaa.getExampleTaskID()
 ```
 - `task_id`: The 16-bit identity of the submitted task.
 
@@ -281,9 +281,9 @@ Annotate mode :
 ```python
 # get example bed and task id.
 # download bed file from server
-task_id=oaa.exampleTaskID()
+task_id=oaa.getExampleTaskID()
 
-oaa.exampleInputFile(save_path='.')
+oaa.getExampleInputFile(save_path='.')
 
 oaa.getInputFile(save_path='.', task_id=2021061544690865)
 ```
