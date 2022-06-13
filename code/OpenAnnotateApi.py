@@ -29,8 +29,8 @@ class Annotate(object):
         self.task_id = -1
         self.IP_addr = '159.226.47.242'
         self.port = '65533'   
-        self.IP_addr_candidate = '166.111.5.185'
-        self.port_candidate = '80'     
+        self.IP_addr_ = '166.111.5.185'
+        self.port_ = '80'     
         print('Use object.help() to get basic functions and arguments')
     
     def help(self):
@@ -205,9 +205,9 @@ class Annotate(object):
                 "taskname" : task_id
                 }
             file = {"file" :open(file_path,"rb")}
-            url = 'http://%s:%s/openness/anno/phpa/stepu_api.php'%(self.IP_addr,self.port)
-            r = requests.post(url,files= file,data=files)
+            url = 'http://%s:%s/openness/anno/phpa/stepu.php'%(self.IP_addr,self.port)
             print('Uploading...')
+            r = requests.post(url,files= file,data=files)
             self.task_id = task_id
             url = 'http://%s:%s/openness/anno/task/%s/%s/%s/logs/openanno.sta'%(self.IP_addr,self.port,task_id[:4],task_id[4:8],task_id[8:])
             result = requests.get(url,stream=True)
@@ -348,12 +348,12 @@ class Annotate(object):
             print('Tissue:  ' + match_tissue)
             idx = np.where(results['Tissue'].values == match_tissue)[0]
             print('Cell types: ')
-            print('Index    -    Cell type')
+            print('Index - Cell type')
             count = 0
             for cell_type in np.unique(results['Celltype'].values[idx]).tolist():
                 count += 1
                 idx_cell = self.searchCelltypeIndex(species,protocol,cell_type)
-                print(idx_cell ,'   -   ' ,cell_type)
+                print(idx_cell ,' - ' ,cell_type)
             counts.append(count)
         if np.sum(counts) == 0:
             print('Your keyword can not be found.')
@@ -397,12 +397,12 @@ class Annotate(object):
             print('System:  ' + match_system)
             idx = np.where(results['System'].values == match_system)[0]
             print('Cell types: ')
-            print('Index    -    Cell type')
+            print('Index - Cell type')
             count = 0
             for cell_type in np.unique(results['Celltype'].values[idx]).tolist():
                 count += 1
                 idx_cell = self.searchCelltypeIndex(species,protocol,cell_type)
-                print(idx_cell ,'   -   ' ,cell_type)
+                print(idx_cell ,' - ' ,cell_type)
             counts.append(count)
         if np.sum(counts) == 0:
             print('Your keyword can not be found.')
