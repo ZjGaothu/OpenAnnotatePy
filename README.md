@@ -29,9 +29,9 @@ pip install OpenAnnotatePy
 | setAddress(IP, port) | set the address of the web server |
 | help() | get a list of the various functions and arguments that the package contains. |
 | getParams() | get params list |
-| getCelltypeList(protocol, species) | get cell type list |
-| getTissueList(protocol, species) | get cell type list |
-| getSystemList(protocol, species) | get cell type list |
+| getCelltypeList(protocol, species) | get cell types for annotation |
+| getTissueList(protocol, species) | get tissue for annotation |
+| getSystemList(protocol, species) | get systems for annotation|
 | searchCelltype(protocol, species, keyword) | search for cell types that contain keyword |
 | searchTissue(protocol, species, keyword) | search for cell types that contain keyword |
 | searchSystem(protocol, species, keyword) | search for cell types that contain keyword |
