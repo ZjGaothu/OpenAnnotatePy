@@ -12,7 +12,7 @@ For more information, please refer to the web: http://health.tsinghua.edu.cn/ope
 Anaconda users can first create a new Python environment and activate it via(this is unnecessary if your Python environment is managed in other ways)
 
 ```Python
-conda create python=3.6 -n OpenAnnotatePy
+conda create python=3.9 -n OpenAnnotatePy
 conda activate OpenAnnotatePy
 ```
 
