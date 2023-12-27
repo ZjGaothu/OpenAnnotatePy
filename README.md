@@ -2,6 +2,10 @@
 
 #### A python package for efficiently annotating the chromatin accessibility of genomic regions
 
+<div align=center>
+<img src = "init/Figure1.jpg" width=100% height=100%>
+</div>  
+
 Chromatin accessibility is a measure of the ability of nuclear macromolecules to physically contact DNA, and is essential for understanding regulatory mechanisms.
 
 OpenAnnotate facilitates the chromatin accessibility annotation for massive genomic regions by allowing ultra-efficient annotation across various biosample types based on chromatin accessibility profiles accumulated in public repositories (1236 samples from ENCODE and 1493 samples from ATACdb).
