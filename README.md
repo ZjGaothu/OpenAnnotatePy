@@ -47,7 +47,7 @@ pip install OpenAnnotatePy
 | viewParams(task_id) | view parameters|
 | getExampleTaskID() | get example task id|
 | getExampleInputFile(save_path) | get example input file to the save_path|
-| fromOpen2EpiScanpy(data, head) | generate anndata from annotation result |
+| fromOpen2EpiScanpy(data_path, head_path) | generate anndata from annotation result |
 
 ### A simple example
 
@@ -65,7 +65,7 @@ anno_data = oaa.getAnnoResult(result_type = 2,task_id = task_id ,cell_type = 1)
 
 anno_head = oaa.getAnnoResult(result_type = 1,task_id = task_id ,cell_type = 1)
 
-ann_data = fromOpen2EpiScanpy(data = anno_data, head = anno_head)
+ann_data = oaa.fromOpen2EpiScanpy(anno_data, anno_head)
 
 ```
 
