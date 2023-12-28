@@ -289,13 +289,13 @@ task_id=oaa.getExampleTaskID()
 
 oaa.getExampleInputFile(save_path='.')
 
-oaa.getInputFile(save_path='.', task_id=2021061544690865)
+oaa.getInputFile(save_path='.', task_id=2023122816404225)
 ```
 output:
 ```
 Example task id: 2020121013091517
 get the result to ./EXAMPLE.bed.gz
-get the result to ./2021061544690865.bed
+get the result to ./2023122816404225.bed
 ```
 Then search for the system, tissue and cell type. After setting parameters, you can submit your job to the server.
 
@@ -317,7 +317,7 @@ oaa.setParams(species=1, protocol=1, cell_type=1, perbase=1)
 task_id=oaa.runAnnotate(input='./EXAMPLE.bed.gz')
 
 # view parameters
-oaa.viewParams(task_id=2021061817196919)
+oaa.viewParams(task_id=2023122816404225)
 ```
 Or you can submit a bed file in list or pd.Dataframe format
 
@@ -339,8 +339,8 @@ task_id=oaa.runAnnotate(input=pd_regions)
 
 output (Omit cell type):
 ```
-Your task id is: 2021061915336302
-You can get the progress of your task through getProgress(task_id=2021061915336302)
+Your task id is: 2023122816404225
+You can get the progress of your task through getProgress(task_id=2023122816404225)
 
 Your task's parameters:
 Protocol: DNase-seq(ENCODE)
@@ -352,21 +352,21 @@ Annotate mode: perbase based
 
 ```python
 # download the result
-oaa.getProgress(task_id=2021061817196919)
-head = oaa.getAnnoResult(result_type=1, task_id=2021061817196919,cell_type=1)
+oaa.getProgress(task_id=2023122816404225)
+head = oaa.getAnnoResult(result_type=1, task_id=2023122816404225,cell_type=1)
 ```
 output：
 ```
 Your task has been completed!
 You can get the result file type first through getResultType()
-You can download result file through getAnnoResult(result_type, 2021061817196919)
+You can download result file through getAnnoResult(result_type, 2023122816404225)
 
 get the result to ./head.txt.gz
 ```
 
 ```python
 # download the result
-anndata = oaa.fromOpen2EpiScanpy('./results/readopen_2021061817196919.txt', './results/head_2021061817196919.txt')
+anndata = oaa.fromOpen2EpiScanpy('./results/readopen_2023122816404225.txt', './results/head_2023122816404225.txt')
 ```
 
 
