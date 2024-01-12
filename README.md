@@ -17,7 +17,7 @@ Anaconda users can first create a new Python environment and activate it via(thi
 
 ```Python
 conda create python=3.9 -n OpenAnnotatePy
-conda activate OpenAnnotatePy
+conda activate OpenAnnotatePy==0.1.0
 ```
 
 OpenAnnotate is available on pypi here and can be installed via
