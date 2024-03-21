@@ -57,6 +57,7 @@ Upload a region file to the web server and download the head and the readopen of
 from OpenAnnotatePy import OpenAnnotateApi
 oaa=OpenAnnotateApi.Annotate()
 
+# GRCh37/hg19 Dnase-seq All-biosamples Per-region annotation mode
 oaa.setParams(species=1, protocol=1, cell_type=1, perbase=1)
 
 task_id=oaa.runAnnotate(input='./EXAMPLE.bed.gz')
