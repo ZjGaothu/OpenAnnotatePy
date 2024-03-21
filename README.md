@@ -51,7 +51,7 @@ pip install OpenAnnotatePy
 
 ### A simple example
 
-Upload a region file to the web server and download the head and the readopen of the annotation result to the local path, then initialize an anndata for downstream analysis (Annotation in Per-region mode).
+Upload a region file to the web server and download the head and the readopen of the annotation result to the local path, then initialize an anndata for downstream analysis **(Annotation in Per-region mode)**.
 
 ```python
 from OpenAnnotatePy import OpenAnnotateApi
