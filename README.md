@@ -14,6 +14,15 @@ For more information, please refer to the web: http://health.tsinghua.edu.cn/ope
 
 We have also developed an R package called [OpenAnnotateR](https://github.com/ZjGaothu/OpenAnnotateR), which can be accessed through this [link](https://github.com/ZjGaothu/OpenAnnotateR).
 
+### News and Updates
+
+**Due to the update of the website deployment location, users should first set the latest address before using the service by running:**
+
+setAddress('166.111.5.185', '80')
+
+
+
+
 ### Install OpenAnnotate via Pypi
 Anaconda users can first create a new Python environment and activate it via(this is unnecessary if your Python environment is managed in other ways)
 
