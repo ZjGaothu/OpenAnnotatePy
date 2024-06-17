@@ -18,7 +18,7 @@ We have also developed an R package called [OpenAnnotateR](https://github.com/Zj
 
 **Due to the update of the website deployment location, users should first set the latest address before using the service by running:**
 ```Python
-setAddress('166.111.5.185', '80')
+SetAddress('166.111.5.185', '80')
 ```
 
 
